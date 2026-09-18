@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="10;url=/productos">
+    <title>❌ Base de Datos No Disponible</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        .card {
+            background: #1a1a1a;
+            border: 2px solid #ff4444;
+            border-radius: 16px;
+            padding: 50px 60px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 0 40px rgba(255, 68, 68, 0.3);
+            animation: pulso 2s infinite;
+        }
+
+        @keyframes pulso {
+            0%   { box-shadow: 0 0 40px rgba(255,68,68,0.3); }
+            50%  { box-shadow: 0 0 70px rgba(255,68,68,0.7); }
+            100% { box-shadow: 0 0 40px rgba(255,68,68,0.3); }
+        }
+
+        .icono { font-size: 80px; margin-bottom: 20px; }
+
+        h1 {
+            font-size: 28px;
+            color: #ff4444;
+            margin-bottom: 12px;
+        }
+
+        .subtitulo {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .error-box {
+            background: #2a0000;
+            border: 1px solid #ff4444;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 13px;
+            color: #ff8888;
+            text-align: left;
+            margin-bottom: 30px;
+            word-break: break-all;
+        }
+
+        .contador {
+            font-size: 15px;
+            color: #888;
+        }
+
+        .barra-progreso {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .barra-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff8800);
+            border-radius: 3px;
+            animation: progreso 10s linear forwards;
+        }
+
+        @keyframes progreso {
+            from { width: 0%; }
+            to   { width: 100%; }
+        }
+
+        .info {
+            margin-top: 30px;
+            padding: 16px;
+            background: #1a1a00;
+            border: 1px solid #888800;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #cccc00;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="icono">🔴</div>
+        <h1>Base de Datos No Disponible</h1>
+        <p class="subtitulo">La conexión con PostgreSQL ha fallado</p>
+
+        <div class="error-box">
+            <strong>Error:</strong>
+            <span th:text="${error}">Error de conexión</span>
+        </div>
+
+        <div class="info">
+            ⚙️ El sistema de restauración automática está activo.<br>
+            La base de datos se restaurará automáticamente en breve.
+        </div>
+
+        <div class="barra-progreso">
+            <div class="barra-fill"></div>
+        </div>
+
+        <p class="contador">🔄 Reintentando automáticamente en <span id="seg">10</span> segundos...</p>
+    </div>
+
+    <script>
+        let s = 10;
+        const el = document.getElementById('seg');
+        setInterval(() => {
+            s--;
+            el.textContent = s;
+            if (s <= 0) window.location.href = '/productos';
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos — GestionBD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0d0d0d;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 36px;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f6e05e, #ed8936);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p { font-size: 13px; color: #555; margin-top: 4px; }
+
+        /* Navbar links */
+        .nav {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .btn-nuevo {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #2b6cb0, #3182ce);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(49,130,206,0.3);
+        }
+        .btn-nuevo:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(49,130,206,0.5);
+        }
+        .btn-backup {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #161616;
+            color: #a78bfa;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid #3d2d6e;
+            transition: all 0.2s;
+        }
+        .btn-backup:hover {
+            background: #1a1030;
+            border-color: #7c3aed;
+            transform: translateY(-1px);
+        }
+
+        /* Table */
+        .table-wrap {
+            background: #161616;
+            border: 1px solid #252525;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #0a0a0a; }
+        thead th {
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #555;
+        }
+        tbody tr {
+            border-top: 1px solid #1e1e1e;
+            transition: background 0.15s;
+        }
+        tbody tr:hover { background: #1a1a1a; }
+        tbody td {
+            padding: 16px 20px;
+            font-size: 14px;
+            color: #c9d1d9;
+        }
+        .id-badge {
+            display: inline-block;
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 6px;
+            padding: 2px 10px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #888;
+        }
+        .precio {
+            font-weight: 600;
+            color: #68d391;
+        }
+        .acciones { display: flex; gap: 10px; }
+        .btn-edit, .btn-del {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-edit {
+            background: #1a2535;
+            color: #63b3ed;
+            border: 1px solid #2a4a6e;
+        }
+        .btn-edit:hover { background: #213a58; }
+        .btn-del {
+            background: #2a0a0a;
+            color: #fc8181;
+            border: 1px solid #5c2020;
+        }
+        .btn-del:hover { background: #3d1010; }
+
+        /* Empty state */
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #444;
+        }
+        .empty-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty p { font-size: 15px; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>🛒 Gestión de Productos</h1>
+            <p>Base de datos · PostgreSQL tienda</p>
+        </div>
+        <div class="nav">
+            <a class="btn-backup" th:href="@{/backup}">☁ Backup en la Nube</a>
+            <a class="btn-nuevo" th:href="@{/productos/nuevo}">＋ Nuevo Producto</a>
+        </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Precio</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${#lists.isEmpty(productos)}">
+                    <td colspan="4">
+                        <div class="empty">
+                            <div class="empty-icon">📦</div>
+                            <p>No hay productos registrados.</p>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="p : ${productos}">
+                    <td><span class="id-badge" th:text="${p.id}"></span></td>
+                    <td th:text="${p.nombre}"></td>
+                    <td><span class="precio" th:text="'$' + ${p.precio}"></span></td>
+                    <td>
+                        <div class="acciones">
+                            <a class="btn-edit" th:href="@{/productos/editar/{id}(id=${p.id})}">✏ Editar</a>
+                            <a class="btn-del"  th:href="@{/productos/eliminar/{id}(id=${p.id})}">🗑 Eliminar</a>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

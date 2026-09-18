@@ -1,0 +1,9 @@
+[build]
+builder = "nixpacks"
+
+[build.env]
+MAVEN_OPTS = "-Dmaven.test.skip=true"
+
+[deploy]
+startCommand = "java -Dserver.port=$PORT -jar target/*.jar"
+restartPolicyType = "on_failure"
