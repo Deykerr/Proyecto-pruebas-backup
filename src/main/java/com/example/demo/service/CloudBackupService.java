@@ -163,17 +163,38 @@ public class CloudBackupService {
             
             // Buscar en toda la cadena de excepciones (Root Cause)
             boolean dbNoExiste = false;
+            boolean tablaNoExiste = false;
             Throwable causa = e;
             while (causa != null) {
-                if (causa.getMessage() != null && (causa.getMessage().contains("does not exist") || causa.getMessage().contains("no existe") || causa.getMessage().contains("FATAL: database"))) {
-                    dbNoExiste = true;
-                    break;
+                String msg = causa.getMessage();
+                if (msg != null) {
+                    if (msg.contains("database") && (msg.contains("does not exist") || msg.contains("no existe"))) {
+                        dbNoExiste = true;
+                    }
+                    if (msg.contains("relation \"productos\" does not exist") || msg.contains("relación «productos» no existe")) {
+                        tablaNoExiste = true;
+                    }
                 }
                 causa = causa.getCause();
             }
             
+            // Si el error es porque eliminaron la tabla (pero la base de datos sí existe)
+            if (tablaNoExiste && !dbNoExiste) {
+                log.warn("¡ALERTA! Parece que borraron la tabla 'productos' pero la BD existe. Intentando recrear la tabla...");
+                try {
+                    java.sql.Connection conn = java.sql.DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+                    java.sql.Statement stmt = conn.createStatement();
+                    stmt.executeUpdate("CREATE TABLE productos (id SERIAL PRIMARY KEY, nombre VARCHAR(255), precio DOUBLE PRECISION)");
+                    stmt.close();
+                    conn.close();
+                    log.info("[Disaster Recovery] ¡Tabla 'productos' recreada exitosamente! Procediendo a auto-restaurar los datos...");
+                    restaurarDesdeNube();
+                } catch (Exception sqlEx) {
+                    log.error("[Disaster Recovery] No se pudo auto-recrear la tabla: {}", sqlEx.getMessage());
+                }
+            }
             // Si el error es porque eliminaron la base de datos entera (DROP DATABASE)
-            if (dbNoExiste) {
+            else if (dbNoExiste) {
                 log.warn("¡ALERTA MÁXIMA! Parece que borraron la base de datos completa. Intentando recrear la infraestructura...");
                 try {
                     // Extraer host y puerto de la URL
@@ -188,7 +209,7 @@ public class CloudBackupService {
                     stmt.executeUpdate("CREATE DATABASE " + dbName);
                     stmt.close();
                     conn.close();
-                    log.info("[Disaster Recovery] ¡Base de datos '" + dbName + "' recreada exitosamente! En un minuto las tablas se autogenerarán y se descargarán los datos.");
+                    log.info("[Disaster Recovery] ¡Base de datos '" + dbName + "' recreada exitosamente! En el siguiente ciclo se creará la tabla.");
                 } catch (Exception sqlEx) {
                     log.error("[Disaster Recovery] No se pudo auto-recrear la BD: {}", sqlEx.getMessage());
                 }
