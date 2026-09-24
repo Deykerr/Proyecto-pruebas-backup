@@ -137,6 +137,15 @@ public class CloudBackupService {
         }
     }
 
+    @Value("${spring.datasource.url:jdbc:postgresql://localhost:5432/tienda}")
+    private String dbUrl;
+
+    @Value("${spring.datasource.username:postgres}")
+    private String dbUser;
+
+    @Value("${spring.datasource.password:root}")
+    private String dbPassword;
+
     // ─────────────────────────────────────────────────────────
     // AUTO-RESTORE (DISASTER RECOVERY AUTOMÁTICO)
     // ─────────────────────────────────────────────────────────
@@ -151,6 +160,29 @@ public class CloudBackupService {
             }
         } catch (Exception e) {
             log.error("[Disaster Recovery] Error al intentar verificar la base de datos: {}", e.getMessage());
+            
+            // Si el error es porque eliminaron la base de datos entera (DROP DATABASE)
+            // Intentamos recrearla automáticamente conectándonos a la bd por defecto 'postgres'
+            if (e.getMessage() != null && (e.getMessage().contains("does not exist") || e.getMessage().contains("no existe") || e.getMessage().contains("Connection refused") || e.getMessage().contains("Unable to acquire JDBC Connection"))) {
+                log.warn("¡ALERTA MÁXIMA! Parece que borraron la base de datos completa. Intentando recrear la infraestructura...");
+                try {
+                    // Extraer host y puerto de la URL (ej: jdbc:postgresql://localhost:5432/tienda -> jdbc:postgresql://localhost:5432/postgres)
+                    String baseUrl = dbUrl.substring(0, dbUrl.lastIndexOf('/')) + "/postgres";
+                    String dbName = dbUrl.substring(dbUrl.lastIndexOf('/') + 1);
+                    if (dbName.contains("?")) {
+                        dbName = dbName.substring(0, dbName.indexOf('?'));
+                    }
+                    
+                    java.sql.Connection conn = java.sql.DriverManager.getConnection(baseUrl, dbUser, dbPassword);
+                    java.sql.Statement stmt = conn.createStatement();
+                    stmt.executeUpdate("CREATE DATABASE " + dbName);
+                    stmt.close();
+                    conn.close();
+                    log.info("[Disaster Recovery] ¡Base de datos '" + dbName + "' recreada exitosamente! En un minuto las tablas se autogenerarán y se descargarán los datos.");
+                } catch (Exception sqlEx) {
+                    log.error("[Disaster Recovery] No se pudo auto-recrear la BD: {}", sqlEx.getMessage());
+                }
+            }
         }
     }
 
