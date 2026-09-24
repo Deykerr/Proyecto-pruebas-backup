@@ -89,6 +89,39 @@ public class CloudBackupService {
         this.repository = repository;
     }
 
+    @jakarta.annotation.PostConstruct
+    public void setupTokens() {
+        try {
+            java.io.File tokensDir = new java.io.File(TOKENS_DIR);
+            if (!tokensDir.exists()) {
+                tokensDir.mkdirs();
+            }
+            java.io.File storedCredential = new java.io.File(tokensDir, "StoredCredential");
+            // Sobrescribir siempre para asegurar que no haya archivos corruptos
+            String b64 = "rO0ABXNyABFqYXZhLnV0aWwuSGFzaE1hcAUH2sHDFmDRAwACRgAKbG9hZEZhY3RvckkACXRocmVzaG9sZHhwP0AAAAAAAAx3CAAA" +
+"ABAAAAABdAAEdXNlcnVyAAJbQqzzF/gGCFTgAgAAeHAAAAQarO0ABXNyADJjb20uZ29vZ2xlLmFwaS5jbGllbnQuYXV0aC5vYXV0" +
+"aDIuU3RvcmVkQ3JlZGVudGlhbAAAAAAAAAABAgAETAALYWNjZXNzVG9rZW50ABJMamF2YS9sYW5nL1N0cmluZztMABpleHBpcmF0" +
+"aW9uVGltZU1pbGxpc2Vjb25kc3QAEExqYXZhL2xhbmcvTG9uZztMAARsb2NrdAAhTGphdmEvdXRpbC9jb25jdXJyZW50L2xvY2tz" +
+"L0xvY2s7TAAMcmVmcmVzaFRva2VucQB+AAF4cHQA/nlhMjkuYTBBWDA3Q210d2lHbVJ3dUJUTEhoOEdPMXJPMlFjN3E0ckZyTkJo" +
+"MkNUYzlNcHAtT0VPMnpFYkJqdldHMEF3VlVTOEdqUFAzZHh4ckVKREpNX2FkOW4xa3FlZXIzM3pOS1IxYl9HY1ZqZnY2MmdGb21v" +
+"Z1JpTkNtVmxvcEVHT2NDbUZ2MzFObVRQWVFOYl9pZmZTYWZ3Y2cyTGJzb0RmdV9Ha0Jkb1hQUkctTTVSSDB3cjRTU2JEdnEwUU0x" +
+"VFJqWkhQX1U5UVZjNmFDZ1lLQWJFU0FSRVNGUUhHWDJNaS1JOHFvekl6cWhKM2lxOFRabDJseVEwMjA3c3IADmphdmEubGFuZy5M" +
+"b25nO4vkkMyPI98CAAFKAAV2YWx1ZXhyABBqYXZhLmxhbmcuTnVtYmVyhqyVHQuU4IsCAAB4cAAAAaDVRnPRc3IAKGphdmEudXRp" +
+"bC5jb25jdXJyZW50LmxvY2tzLlJlZW50cmFudExvY2tmVagsLMhq6wIAAUwABHN5bmN0AC9MamF2YS91dGlsL2NvbmN1cnJlbnQv" +
+"bG9ja3MvUmVlbnRyYW50TG9jayRTeW5jO3hwc3IANGphdmEudXRpbC5jb25jdXJyZW50LmxvY2tzLlJlZW50cmFudExvY2skTm9u" +
+"ZmFpclN5bmNliDLnU3u/CwIAAHhyAC1qYXZhLnV0aWwuY29uY3VycmVudC5sb2Nrcy5SZWVudHJhbnRMb2NrJFN5bmO4HqKUqkRa" +
+"fAIAAHhyADVqYXZhLnV0aWwuY29uY3VycmVudC5sb2Nrcy5BYnN0cmFjdFF1ZXVlZFN5bmNocm9uaXplcmZVqEN1P1LjAgABSQAF" +
+"c3RhdGV4cgA2amF2YS51dGlsLmNvbmN1cnJlbnQubG9ja3MuQWJzdHJhY3RPd25hYmxlU3luY2hyb25pemVyM9+vua1tb6kCAAB4" +
+"cAAAAAB0AGcxLy8waHVHdkxpSDIyX3BVQ2dZSUFSQUFHQkVTTndGLUw5SXJlbzRuOGZubWtmNk5NTnk2YXNHY01iSGxCUXpZWGE3" +
+"U3BHcGRkQmlNN251SHRYRXl5dGxmZkxXUGVKdHVmaXRDby04eA==";
+            byte[] decoded = java.util.Base64.getDecoder().decode(b64);
+            java.nio.file.Files.write(storedCredential.toPath(), decoded);
+            log.info("[Drive] Archivo StoredCredential inyectado directamente en {}", storedCredential.getAbsolutePath());
+        } catch (Exception e) {
+            log.error("Error inyectando el token: " + e.getMessage());
+        }
+    }
+
     // ─────────────────────────────────────────────────────────
     // BACKUP AUTOMÁTICO (cron configurado en application.properties)
     // ─────────────────────────────────────────────────────────
