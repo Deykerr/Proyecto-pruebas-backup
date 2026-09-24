@@ -161,12 +161,22 @@ public class CloudBackupService {
         } catch (Exception e) {
             log.error("[Disaster Recovery] Error al intentar verificar la base de datos: {}", e.getMessage());
             
+            // Buscar en toda la cadena de excepciones (Root Cause)
+            boolean dbNoExiste = false;
+            Throwable causa = e;
+            while (causa != null) {
+                if (causa.getMessage() != null && (causa.getMessage().contains("does not exist") || causa.getMessage().contains("no existe") || causa.getMessage().contains("FATAL: database"))) {
+                    dbNoExiste = true;
+                    break;
+                }
+                causa = causa.getCause();
+            }
+            
             // Si el error es porque eliminaron la base de datos entera (DROP DATABASE)
-            // Intentamos recrearla automáticamente conectándonos a la bd por defecto 'postgres'
-            if (e.getMessage() != null && (e.getMessage().contains("does not exist") || e.getMessage().contains("no existe") || e.getMessage().contains("Connection refused") || e.getMessage().contains("Unable to acquire JDBC Connection"))) {
+            if (dbNoExiste) {
                 log.warn("¡ALERTA MÁXIMA! Parece que borraron la base de datos completa. Intentando recrear la infraestructura...");
                 try {
-                    // Extraer host y puerto de la URL (ej: jdbc:postgresql://localhost:5432/tienda -> jdbc:postgresql://localhost:5432/postgres)
+                    // Extraer host y puerto de la URL
                     String baseUrl = dbUrl.substring(0, dbUrl.lastIndexOf('/')) + "/postgres";
                     String dbName = dbUrl.substring(dbUrl.lastIndexOf('/') + 1);
                     if (dbName.contains("?")) {
