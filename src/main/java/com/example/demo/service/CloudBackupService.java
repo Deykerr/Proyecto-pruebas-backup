@@ -129,7 +129,29 @@ public class CloudBackupService {
     @Scheduled(cron = "${backup.cron}")
     public void backupAutomatico() {
         log.info("[Backup automático] Iniciando...");
-        hacerBackup();
+        // Si la base de datos está vacía, no queremos hacer backup y sobrescribir la nube con 0 datos!
+        if (repository.count() > 0) {
+            hacerBackup();
+        } else {
+            log.warn("[Backup automático] Omitido porque la base de datos está vacía (evitando borrar backup en la nube).");
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // AUTO-RESTORE (DISASTER RECOVERY AUTOMÁTICO)
+    // ─────────────────────────────────────────────────────────
+    @Scheduled(fixedDelay = 60000) // Se ejecuta cada 1 minuto (60000 ms)
+    public void disasterRecoveryAutomatico() {
+        try {
+            // Si detecta que no hay productos (alguien borró los datos)
+            if (repository.count() == 0) {
+                log.warn("¡ALERTA! [Disaster Recovery] Se detectó la base de datos vacía. Iniciando auto-restauración desde la nube...");
+                String resultado = restaurarDesdeNube();
+                log.info("[Disaster Recovery] Resultado: {}", resultado);
+            }
+        } catch (Exception e) {
+            log.error("[Disaster Recovery] Error al intentar verificar la base de datos: {}", e.getMessage());
+        }
     }
 
     // ─────────────────────────────────────────────────────────
